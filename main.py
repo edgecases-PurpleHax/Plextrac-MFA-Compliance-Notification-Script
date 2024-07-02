@@ -1,3 +1,8 @@
+"""
+This module authenticates with the Plextrac API, searches for specific emails,
+and sends an email notification using Gmail SMTP.
+"""
+
 import smtplib
 import json
 from email.mime.text import MIMEText
@@ -5,20 +10,13 @@ from email.mime.multipart import MIMEMultipart
 import requests
 
 
-
-"""
-This module authenticates with the Plextrac API, searches for specific emails,
-and sends an email notification using Gmail SMTP.
-"""
-
-
 def authenticate_and_send_email():
     """
     Authenticate with Plextrac API, search for specific emails, and send an email notification.
 
     Reads configuration from 'config.json' for Plextrac API credentials and Gmail SMTP details.
-    Searches for users based on specific email criteria specified in 'customer_domains' key in config.
-    Sends an email listing non-compliant users to a specified recipient using Gmail SMTP.
+    Searches for users based on specific email criteria specified in 'customer_domains' key in
+    config. Sends an email listing non-compliant users to a specified recipient using Gmail SMTP.
 
     Raises:
         requests.exceptions.RequestException: If an error occurs during API requests.
@@ -35,28 +33,30 @@ def authenticate_and_send_email():
         config = json.load(config_file)
 
     # Authenticate with Plextrac API
-    auth_data = {
-        "username": config['plextrac_username'],
-        "password": config['plextrac_password']
-    }
-    r = requests.post(
+    response = requests.post(
         url=f"{config['plextrac_url']}/api/v1/authenticate",
-        json=auth_data,
+        json={
+            "username": config['plextrac_username'],
+            "password": config['plextrac_password']
+        },
         timeout=10  # Add timeout
     )
-    r.raise_for_status()  # Raise exception for bad response status
+    response.raise_for_status()  # Raise exception for bad response status
 
     # Set authorization headers for subsequent requests
     headers = {
-        "Authorization": f"Bearer {r.json()['token']}"
+        "Authorization": f"Bearer {response.json()['token']}"
     }
 
-    # Define function to search for specific emails in JSON data
     def search_emails_in_data(json_obj):
+        """
+        Helper function to search for specific emails in JSON data.
+        """
         search_terms = config['customer_domains']  # Read domains from config
         matches = []
 
-        if isinstance(json_obj, dict) and 'data' in json_obj and isinstance(json_obj['data'], list):
+        if isinstance(json_obj, dict) and 'data' in json_obj \
+                and isinstance(json_obj['data'], list):
             for item in json_obj['data']:
                 if isinstance(item, dict) and 'email' in item:
                     email = item['email']
@@ -66,32 +66,18 @@ def authenticate_and_send_email():
 
     # Retrieve users from Plextrac API based on authenticated session
     user_endpoint = requests.get(
-        url=f"{config['plextrac_url']}/api/v2/tenants/{r.json()['tenant_id']}/users",
+        url=f"{config['plextrac_url']}/api/v2/tenants/{response.json()['tenant_id']}/users",
         params={'limit': 100},
         headers=headers,
         timeout=10  # Add timeout
     )
     user_endpoint.raise_for_status()  # Raise exception for bad response status
-    user = user_endpoint.json()
+    user_data = user_endpoint.json()
 
     # Search for users matching specified criteria
-    customer_users = search_emails_in_data(user)
+    customer_users = search_emails_in_data(user_data)
 
-    # Prepare SMTP server details for Gmail
-    smtp_server = 'smtp.gmail.com'
-    smtp_port = 587  # TLS port (SSL is deprecated and should not be used)
-
-    # Sender email credentials
-    sender_email = config['gmail_username']
-    sender_password = config['gmail_app_password']  # Gmail App-specific password
-
-    # Recipient email address
-    recipient_email = "user@example.com"  # Replace with the recipient's email address
-
-    # Prepare the email subject
-    subject = "MFA Non-compliant Users"
-
-    # Construct the email body with user information
+    # Prepare the email body with user information
     body = (
         f"The following users are not compliant with the {config['customer']} "
         f"requirement for MFA enabled on the Plextrac Platform:\n\n"
@@ -102,26 +88,26 @@ def authenticate_and_send_email():
 
     # Create a multipart message and set headers
     message = MIMEMultipart()
-    message['From'] = sender_email
-    message['To'] = recipient_email
-    message['Subject'] = subject
+    message['From'] = config['gmail_username']
+    message['To'] = "user@example.com"  # Replace with the recipient's email address
+    message['Subject'] = "MFA Non-compliant Users"
 
     # Add body to email
     message.attach(MIMEText(body, 'plain'))
 
     try:
         # Establish a SMTP connection to Gmail's server
-        smtp = smtplib.SMTP(smtp_server, smtp_port)
+        smtp = smtplib.SMTP('smtp.gmail.com', 587)
 
         # Start TLS encryption
         smtp.starttls()
 
         # Login to Gmail SMTP server
-        smtp.login(sender_email, sender_password)
+        smtp.login(config['gmail_username'], config['gmail_app_password'])
 
         # Send email
-        smtp.sendmail(sender_email, recipient_email, message.as_string())
-        print(f"Email sent successfully to {recipient_email}")
+        smtp.sendmail(config['gmail_username'], "user@example.com", message.as_string())
+        print(f"Email sent successfully to {config['poc_email']}")
 
     except (requests.exceptions.RequestException, smtplib.SMTPException) as e:
         print(f"Error sending email: {e}")
