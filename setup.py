@@ -1,7 +1,6 @@
-"""
-Setup script to create a virtual environment, install dependencies, and set up a scheduled task
-on Linux/Mac (using cron) or Windows (using Task Scheduler) to run the main script periodically.
-"""
+"""Setup script to create a virtual environment, install dependencies,
+and set up a scheduled task on Linux/Mac (using cron) or Windows (using Task
+Scheduler) to run the main script periodically."""
 
 import os
 import platform
@@ -10,12 +9,13 @@ import subprocess
 
 def setup_environment():
     """
-    Set up the virtual environment, install dependencies, and create a scheduled task.
+    Set up the virtual environment, install dependencies, and create a
+    scheduled task.
 
-    Detects the platform (Linux/Mac or Windows) and performs the necessary steps:
-    - Create and activate a virtual environment.
-    - Install dependencies from requirements.txt.
-    - Set up a scheduled task to run the main script periodically.
+    Detects the platform (Linux/Mac or Windows) and performs the necessary
+    steps: - Create and activate a virtual environment. - Install
+    dependencies from requirements.txt. - Set up a scheduled task to run the
+    main script periodically.
 
     Raises:
         subprocess.CalledProcessError: If any command fails.
@@ -35,7 +35,9 @@ def setup_environment():
         activate_script = os.path.join(venv_path, 'bin', 'activate')
 
     # Install dependencies
-    subprocess.check_call(f'{activate_script} && pip install -r {requirements_path}', shell=True)
+    subprocess.check_call(
+        f'{activate_script} && pip install -r {requirements_path}', shell=True
+    )
 
     # Schedule the script to run periodically
     if current_os == 'Windows':
@@ -46,11 +48,13 @@ def setup_environment():
 
 def schedule_task_windows(script_path, activate_script):
     """
-    Schedule a task in Windows Task Scheduler to run the main script periodically.
+    Schedule a task in Windows Task Scheduler to run the main script
+    periodically.
 
     Args:
         script_path (str): The path to the main script.
-        activate_script (str): The path to the virtual environment activation script.
+        activate_script (str): The path to the virtual environment activation
+        script.
     """
     task_name = "RunMainScript"
     action = (
@@ -66,10 +70,13 @@ def schedule_task_unix(script_path, activate_script):
 
     Args:
         script_path (str): The path to the main script.
-        activate_script (str): The path to the virtual environment activation script.
+        activate_script (str): The path to the virtual environment
+        activation script.
     """
     cron_job = f'0 8 * * 5 source {activate_script} && python {script_path}'
-    subprocess.check_call(f'(crontab -l; echo "{cron_job}") | crontab -', shell=True)
+    subprocess.check_call(
+        f'(crontab -l; echo "{cron_job}") | crontab -', shell=True
+    )
 
 
 if __name__ == "__main__":
