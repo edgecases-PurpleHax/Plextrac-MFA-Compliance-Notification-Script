@@ -1,0 +1,9 @@
+{
+  "plextrac_username": "your_plextrac_username",
+  "plextrac_password": "your_plextrac_password",
+  "plextrac_url": "https://example.plextrac.com",
+  "gmail_username": "your_gmail_username",
+  "gmail_app_password": "your_gmail_app_password",
+  "customer_domains": ["example.com", "example.org", "anotherdomain.com"],
+  "poc_email": "user@example.com"
+}
