@@ -85,7 +85,7 @@ def authenticate_and_send_email():
     subject = "MFA Non-compliant Users"
 
     # Construct the email body with user information
-    body = f"The following users are not compliant with the {config['customer']}"\ 
+    body = f"The following users are not compliant with the {config['customer']}" \ 
            f"requirement for MFA enabled on the Plextrac " \
            "Platform:\n\n"
     for user in customer_users:
