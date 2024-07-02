@@ -35,7 +35,7 @@ def setup_environment():
         activate_script = os.path.join(venv_path, 'bin', 'activate')
 
     # Install dependencies
-    subprocess.check_call([activate_script, '&&', 'pip', 'install', '-r', requirements_path], shell=True)
+    subprocess.check_call(f'{activate_script} && pip install -r {requirements_path}', shell=True)
 
     # Schedule the script to run periodically
     if current_os == 'Windows':
@@ -53,8 +53,10 @@ def schedule_task_windows(script_path, activate_script):
         activate_script (str): The path to the virtual environment activation script.
     """
     task_name = "RunMainScript"
-    action = f'SchTasks /Create /SC WEEKLY /D FRI /TN "{task_name}" /TR "' \
-             f'{activate_script} && python {script_path}" /ST 08:00'
+    action = (
+        f'SchTasks /Create /SC WEEKLY /D FRI /TN "{task_name}" /TR "'
+        f'{activate_script} && python {script_path}" /ST 08:00'
+    )
     subprocess.check_call(action, shell=True)
 
 
