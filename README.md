@@ -1,6 +1,6 @@
 # Plextrac MFA Compliance Notification Script
 
-### This script interacts with the Plextrac API to identify users who are not compliant with MFA (Multi-Factor Authentication) requirements based on specified customer email domains. It then sends an email notification to alert about non-compliant users using Gmail SMTP.
+This script interacts with the Plextrac API to identify users who are not compliant with MFA (Multi-Factor Authentication) requirements based on specified customer email domains. It then sends an email notification to alert about non-compliant users using Gmail SMTP.
 
 ### Requirements
 
@@ -8,7 +8,7 @@
     Requests library (pip install requests)
     Gmail account for sending emails
 
-Setup
+### Setup
 
     Clone the Repository:
     git clone https://github.com/yourusername/plextrac-mfa-compliance.git
@@ -39,13 +39,13 @@ Setup
     Automation:
         To automate the script to run weekly, configure a cron job on Linux or a scheduled task on Windows to execute the script at your desired frequency (e.g., every Friday at 8 AM EST).
 
-Functionality
+### Functionality
 
     Authentication: The script authenticates with the Plextrac API using credentials provided in config.json.
     User Search: It searches for users within specified customer domains (defined in customer_domains list in config.json) who are not compliant with MFA requirements.
     Email Notification: Sends an email notification using Gmail SMTP to inform about non-compliant users, listing their names and email addresses.
 
-Notes
+### Notes
 
     Ensure that the configuration (config.json) is correctly set up before running the script.
     Use TLS (port 587) for SMTP connections as SSL (port 465) is deprecated.
