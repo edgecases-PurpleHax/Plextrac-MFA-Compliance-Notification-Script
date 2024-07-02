@@ -12,21 +12,28 @@ import requests
 
 def authenticate_and_send_email():
     """
-    Authenticate with Plextrac API, search for specific emails, and send an email notification.
+    Authenticate with Plextrac API, search for specific emails, and send an
+    email notification.
 
-    Reads configuration from 'config.json' for Plextrac API credentials and Gmail SMTP details.
-    Searches for users based on specific email criteria specified in 'customer_domains' key in
-    config. Sends an email listing non-compliant users to a specified recipient using Gmail SMTP.
+    Reads configuration from 'config.json' for Plextrac API credentials
+    and Gmail SMTP details.
+    Searches for users based on specific email criteria specified in
+    'customer_domains' key in
+    config. Sends an email listing non-compliant users to a specified
+    recipient using Gmail SMTP.
 
     Raises:
-        requests.exceptions.RequestException: If an error occurs during API requests.
+        requests.exceptions.RequestException: If an error occurs during API
+        requests.
         smtplib.SMTPException: If an error occurs during SMTP operations.
 
     Notes:
-        - Ensure 'config.json' contains 'plextrac_username', 'plextrac_password', 'plextrac_url',
-          'gmail_username', 'gmail_app_password', and 'customer_domains' fields.
+        - Ensure 'config.json' contains 'plextrac_username',
+        'plextrac_password', 'plextrac_url','gmail_username',
+        'gmail_app_password', and 'customer_domains' fields.
         - Use TLS (port 587) for SMTP as SSL (port 465) is deprecated.
-        - Specify customer email domains in 'customer_domains' key in config.json.
+        - Specify customer email domains in 'customer_domains' key in
+        config.json.
     """
     # Load configuration from config.json
     with open('config.json', encoding='utf-8') as config_file:
@@ -66,7 +73,8 @@ def authenticate_and_send_email():
 
     # Retrieve users from Plextrac API based on authenticated session
     user_endpoint = requests.get(
-        url=f"{config['plextrac_url']}/api/v2/tenants/{response.json()['tenant_id']}/users",
+        url=f"{config['plextrac_url']}/api/v2/tenants/"
+            f"{response.json()['tenant_id']}/users",
         params={'limit': 100},
         headers=headers,
         timeout=10  # Add timeout
@@ -89,7 +97,8 @@ def authenticate_and_send_email():
     # Create a multipart message and set headers
     message = MIMEMultipart()
     message['From'] = config['gmail_username']
-    message['To'] = "user@example.com"  # Replace with the recipient's email address
+    message['To'] = "user@example.com"  # Replace with the recipient's email
+    # address
     message['Subject'] = "MFA Non-compliant Users"
 
     # Add body to email
@@ -106,7 +115,8 @@ def authenticate_and_send_email():
         smtp.login(config['gmail_username'], config['gmail_app_password'])
 
         # Send email
-        smtp.sendmail(config['gmail_username'], "user@example.com", message.as_string())
+        smtp.sendmail(config['gmail_username'], "user@example.com",
+                      message.as_string())
         print(f"Email sent successfully to {config['poc_email']}")
 
     except (requests.exceptions.RequestException, smtplib.SMTPException) as e:
