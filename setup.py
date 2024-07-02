@@ -1,77 +1,74 @@
+"""
+Setup script to create a virtual environment, install dependencies, and set up a scheduled task
+on Linux/Mac (using cron) or Windows (using Task Scheduler) to run the main script periodically.
+"""
+
 import os
 import platform
 import subprocess
 
 
-def setup_virtualenv_and_task():
+def setup_environment():
     """
-    Sets up a virtual environment, installs dependencies, and schedules a task to run a script.
+    Set up the virtual environment, install dependencies, and create a scheduled task.
 
-    This function detects the current operating system and performs the following actions:
-    - Creates a virtual environment ('venv') in the current directory if it doesn't exist.
-    - Activates the virtual environment, installs dependencies from 'requirements.txt', and deactivates it.
-    - For Windows, schedules a task using 'schtasks' to run the script ('script.py') every Friday at 8 AM.
-    - For Unix-like systems (Linux or MacOS), sets up a cron job to run the script every Friday at 8 AM.
+    Detects the platform (Linux/Mac or Windows) and performs the necessary steps:
+    - Create and activate a virtual environment.
+    - Install dependencies from requirements.txt.
+    - Set up a scheduled task to run the main script periodically.
 
     Raises:
-        subprocess.CalledProcessError: If any subprocess command returns a non-zero exit status.
-
-    Notes:
-        - Replace 'script.py' and 'requirements.txt' with your actual script and dependencies file names.
-        - Ensure that 'python' or 'python3' is available in the system PATH for creating the virtual environment.
+        subprocess.CalledProcessError: If any command fails.
     """
-    # Determine paths and commands based on OS
-    current_dir = os.getcwd()
-    venv_dir = os.path.join(current_dir, 'venv')
-    requirements_file = os.path.join(current_dir, 'requirements.txt')
-    script_file = os.path.join(current_dir, 'script.py')
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    venv_path = os.path.join(base_dir, 'venv')
+    requirements_path = os.path.join(base_dir, 'requirements.txt')
+    main_script_path = os.path.join(base_dir, 'main.py')
+    current_os = platform.system()
 
-    if platform.system() == 'Windows':
-        # Windows specific commands
-        venv_python = os.path.join(venv_dir, 'Scripts', 'python.exe')
-        activate_cmd = os.path.join(venv_dir, 'Scripts', 'activate.bat')
+    # Create virtual environment
+    subprocess.check_call(['python', '-m', 'venv', venv_path])
 
-        # Create virtual environment if it doesn't exist
-        if not os.path.exists(venv_dir):
-            subprocess.run(['python', '-m', 'venv', venv_dir], check=True)
-
-        # Activate virtual environment and install dependencies
-        subprocess.run([activate_cmd], shell=True, check=True)
-        subprocess.run([venv_python, '-m', 'pip', 'install', '-r', requirements_file], check=True)
-        subprocess.run(['deactivate'], shell=True, check=True)
-
-        # Schedule the task to run every Friday at 8 AM (Windows)
-        task_command = f'{venv_python} {script_file}'
-        task_name = "MyPythonScript"
-        task_trigger = 'weekly'
-        task_day = 'FRI'
-        task_time = '08:00:00'
-        create_task_cmd = f'schtasks /create /tn "{task_name}" /tr "{task_command}" /sc {task_trigger} /d {task_day} /st {task_time} /ru INTERACTIVE'
-        subprocess.run(create_task_cmd, shell=True, check=True)
-        print(f"Scheduled task '{task_name}' created successfully.")
-
-    elif platform.system() in ['Linux', 'Darwin']:
-        # Linux/Mac specific commands
-        venv_python = os.path.join(venv_dir, 'bin', 'python')
-        activate_cmd = 'source ' + os.path.join(venv_dir, 'bin', 'activate')
-
-        # Create virtual environment if it doesn't exist
-        if not os.path.exists(venv_dir):
-            subprocess.run(['python3', '-m', 'venv', venv_dir], check=True)
-
-        # Activate virtual environment and install dependencies
-        subprocess.run([activate_cmd], shell=True, check=True)
-        subprocess.run([venv_python, '-m', 'pip', 'install', '-r', requirements_file], check=True)
-        subprocess.run(['deactivate'], shell=True, check=True)
-
-        # Setup cron job to run the script every Friday at 8 AM (Linux/Mac)
-        cron_command = f'(crontab -l ; echo "0 8 * * 5 {venv_python} {script_file}") | sort - | uniq - | crontab -'
-        subprocess.run(cron_command, shell=True, check=True)
-        print("Cron job scheduled successfully.")
-
+    if current_os == 'Windows':
+        activate_script = os.path.join(venv_path, 'Scripts', 'activate')
     else:
-        print("Unsupported operating system. Please use Linux, MacOS, or Windows.")
+        activate_script = os.path.join(venv_path, 'bin', 'activate')
+
+    # Install dependencies
+    subprocess.check_call([activate_script, '&&', 'pip', 'install', '-r', requirements_path], shell=True)
+
+    # Schedule the script to run periodically
+    if current_os == 'Windows':
+        schedule_task_windows(main_script_path, activate_script)
+    else:
+        schedule_task_unix(main_script_path, activate_script)
+
+
+def schedule_task_windows(script_path, activate_script):
+    """
+    Schedule a task in Windows Task Scheduler to run the main script periodically.
+
+    Args:
+        script_path (str): The path to the main script.
+        activate_script (str): The path to the virtual environment activation script.
+    """
+    task_name = "RunMainScript"
+    action = f'SchTasks /Create /SC WEEKLY /D FRI /TN "{task_name}" /TR "' \
+             f'{activate_script} && python {script_path}" /ST 08:00'
+    subprocess.check_call(action, shell=True)
+
+
+def schedule_task_unix(script_path, activate_script):
+    """
+    Schedule a cron job to run the main script periodically on Linux/Mac.
+
+    Args:
+        script_path (str): The path to the main script.
+        activate_script (str): The path to the virtual environment activation script.
+    """
+    cron_job = f'0 8 * * 5 source {activate_script} && python {script_path}'
+    subprocess.check_call(f'(crontab -l; echo "{cron_job}") | crontab -', shell=True)
 
 
 if __name__ == "__main__":
-    setup_virtualenv_and_task()
+    setup_environment()
