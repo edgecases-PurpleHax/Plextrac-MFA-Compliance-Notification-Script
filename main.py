@@ -1,8 +1,14 @@
-import requests
 import smtplib
 import json
+import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+
+"""
+This module authenticates with the Plextrac API, searches for specific emails,
+and sends an email notification using Gmail SMTP.
+"""
 
 
 def authenticate_and_send_email():
@@ -24,17 +30,17 @@ def authenticate_and_send_email():
         - Specify customer email domains in 'customer_domains' key in config.json.
     """
     # Load configuration from config.json
-    with open('config.json') as config_file:
+    with open('config.json', encoding='utf-8') as config_file:
         config = json.load(config_file)
 
     # Authenticate with Plextrac API
-    data = {
+    auth_data = {
         "username": config['plextrac_username'],
         "password": config['plextrac_password']
     }
     r = requests.post(
         url=f"{config['plextrac_url']}/api/v1/authenticate",
-        json=data,
+        json=auth_data,
         timeout=10  # Add timeout
     )
     r.raise_for_status()  # Raise exception for bad response status
@@ -76,7 +82,7 @@ def authenticate_and_send_email():
 
     # Sender email credentials
     sender_email = config['gmail_username']
-    sender_password = config['gmail_app_password']  # Your Gmail account password or an app-specific password
+    sender_password = config['gmail_app_password']  # Gmail App-specific password
 
     # Recipient email address
     recipient_email = "user@example.com"  # Replace with the recipient's email address
@@ -85,9 +91,10 @@ def authenticate_and_send_email():
     subject = "MFA Non-compliant Users"
 
     # Construct the email body with user information
-    body = f"The following users are not compliant with the {config['customer']}" \
-           f"requirement for MFA enabled on the Plextrac " \
-           "Platform:\n\n"
+    body = (
+        f"The following users are not compliant with the {config['customer']} "
+        f"requirement for MFA enabled on the Plextrac Platform:\n\n"
+    )
     for user in customer_users:
         if not user['mfa']['enabled']:
             body += f"Name: {user['fullName']}\nEmail: {user['email']}\n\n"
