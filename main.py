@@ -48,7 +48,8 @@ def search_emails_in_data(json_obj, search_terms):
 def get_users(config, headers):
     """Retrieve users from Plextrac API."""
     user_endpoint = requests.get(
-        url=f"{config['plextrac_url']}/api/v2/tenants/{headers['Authorization'].split(' ')[1]}/users",
+        url=f"{config['plextrac_url']}/api/v2/tenants/"\
+            "{headers['Authorization'].split(' ')[1]}/users",
         params={'limit': 100},
         headers=headers
     )
